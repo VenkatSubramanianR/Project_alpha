@@ -5,6 +5,8 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from dataclasses import dataclass, field
 
+print("Starting server…")
+
 # ── Config ────────────────────────────────────────────────────
 with open("config.json") as f:
     CONFIG = json.load(f)
