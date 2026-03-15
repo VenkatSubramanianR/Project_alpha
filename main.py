@@ -18,6 +18,7 @@ MODEL      = "llama3.2:latest"
 
 app = FastAPI()
 
+print("Server started. Open http://localhost:8000 in your browser to test the demo.")
 
 # ─────────────────────────────────────────────────────────────
 # Session state
