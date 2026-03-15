@@ -318,7 +318,7 @@ async def chat(ws: WebSocket):
     except WebSocketDisconnect:
         pass
 
-
+print("WebSocket endpoint ready at ws://localhost:8000/ws")
 # ─────────────────────────────────────────────────────────────
 # Serve frontend
 # ─────────────────────────────────────────────────────────────
