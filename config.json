@@ -1,0 +1,32 @@
+{
+  "system_prompt": "You are Maya, an outbound caller from Northwell Health's claims department who is calling to check the status of a claim. You are speaking with a support representative at an insurance company. You have the patient's details on file and will provide them when asked. Be concise, warm, and professional.",
+  "patient": {
+    "name": "Robert Langdon",
+    "dob": "1975-03-14",
+    "member_id": "MBR-00421",
+    "tax_id": "TAX-887234",
+    "npi_id": "NPI-1234567"
+  },
+  "collect_fields": [
+    {
+      "key": "claim_status",
+      "label": "Claim Status",
+      "ask": "Could you please tell me the current status of the claim for {patient_name}?"
+    },
+    {
+      "key": "claim_number",
+      "label": "Claim Number",
+      "ask": "Thank you. Could I also get the claim number for this?"
+    },
+    {
+      "key": "call_reference_number",
+      "label": "Call Reference Number",
+      "ask": "And could I get the call reference number for today's interaction?"
+    },
+    {
+      "key": "agent_name",
+      "label": "Agent Name",
+      "ask": "Before I let you go, could I get your full name for our records?"
+    }
+  ]
+}

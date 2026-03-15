@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Claims Call — Inbound Rep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Geist:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#111113;--surface:#18181b;--border:#27272a;--hover:#1f1f23;
+  --txt:#e4e4e7;--dim:#52525b;--mid:#a1a1aa;
+  --green:#22c55e;--amber:#f59e0b;--blue:#3b82f6;
+}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Geist',sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+
+.app{display:grid;grid-template-columns:210px 1fr 230px;height:100vh}
+
+/* ── Left sidebar ── */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0}
+.brand{padding:0 20px 18px;border-bottom:1px solid var(--border)}
+.brand h1{font-size:.88rem;font-weight:600}
+.brand p{font-size:.68rem;color:var(--dim);margin-top:3px;font-family:'Geist Mono',monospace}
+.sec-label{padding:16px 20px 8px;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-family:'Geist Mono',monospace}
+.info-row{padding:5px 20px;display:flex;flex-direction:column;gap:2px}
+.info-key{font-size:.6rem;color:var(--dim);font-family:'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase}
+.info-val{font-size:.72rem;color:var(--mid);font-family:'Geist Mono',monospace}
+
+/* Tool box */
+.lookup-box{margin:14px 16px 0;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;display:none}
+.lookup-box.visible{display:block}
+.lookup-label-txt{font-size:.58rem;color:var(--dim);font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.lookup-name{font-size:.72rem;color:var(--mid);display:flex;align-items:center;gap:8px}
+.spinner{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--border);border-top-color:var(--amber);animation:spin .6s linear infinite;flex-shrink:0}
+.spinner.done{border-color:var(--green);border-top-color:var(--green);animation:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.status-row{margin-top:auto;padding:16px 20px 0;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.status-txt{font-size:.7rem;color:var(--dim);font-family:'Geist Mono',monospace}
+
+/* ── Main chat ── */
+.main{display:flex;flex-direction:column;overflow:hidden}
+.topbar{padding:14px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--surface)}
+.topbar-title{font-size:.82rem;font-weight:500}
+.topbar-badge{padding:3px 9px;border:1px solid var(--border);border-radius:4px;font-size:.65rem;color:var(--mid);font-family:'Geist Mono',monospace;background:var(--bg);transition:all .3s}
+.topbar-badge.live{border-color:rgba(59,130,246,.35);color:var(--blue);background:rgba(59,130,246,.06)}
+.topbar-badge.complete{border-color:rgba(34,197,94,.35);color:var(--green);background:rgba(34,197,94,.06)}
+
+#messages{flex:1;overflow-y:auto;scroll-behavior:smooth}
+#messages::-webkit-scrollbar{width:4px}
+#messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+.msg{display:flex;gap:12px;padding:18px 28px;border-bottom:1px solid var(--border);animation:fadein .18s ease}
+.msg:last-child{border-bottom:none}
+.msg.user{background:var(--surface)}
+.msg.bot{background:var(--bg)}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+.avatar{width:28px;height:28px;border-radius:6px;flex-shrink:0;display:grid;place-items:center;font-size:.6rem;font-weight:600;font-family:'Geist Mono',monospace;margin-top:2px;border:1px solid var(--border);color:var(--mid);background:var(--bg)}
+.msg-body{flex:1}
+.msg-who{font-size:.65rem;color:var(--dim);font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.msg-text{font-size:.875rem;line-height:1.75;color:var(--txt);white-space:pre-wrap;word-break:break-word}
+.msg.user .msg-text{color:#d4d4d8}
+
+.tool-pill{display:inline-flex;align-items:center;gap:7px;padding:3px 10px;margin-bottom:8px;background:var(--surface);border:1px solid var(--border);border-radius:99px;font-size:.68rem;color:var(--mid);font-family:'Geist Mono',monospace;animation:fadein .2s ease}
+.pill-dot{width:5px;height:5px;border-radius:50%;background:var(--amber);animation:blink 1s ease-in-out infinite}
+.tool-pill.done .pill-dot{background:var(--green);animation:none}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+.typing{display:flex;gap:4px;align-items:center;padding:2px 0}
+.typing span{width:4px;height:4px;border-radius:50%;background:var(--dim);animation:bounce .8s ease-in-out infinite}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+
+.input-area{padding:14px 28px 18px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.input-box{display:flex;align-items:flex-end;background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color .15s}
+.input-box:focus-within{border-color:#3f3f46}
+#input{flex:1;background:transparent;border:none;outline:none;color:var(--txt);font-family:'Geist',sans-serif;font-size:.875rem;line-height:1.5;padding:12px 16px;resize:none;min-height:22px;max-height:140px;caret-color:var(--txt)}
+#input::placeholder{color:var(--dim)}
+#send{width:46px;height:46px;flex-shrink:0;background:transparent;border:none;border-left:1px solid var(--border);color:var(--dim);cursor:pointer;display:grid;place-items:center;transition:background .12s,color .12s}
+#send:hover:not(:disabled){background:var(--hover);color:var(--txt)}
+#send:disabled{opacity:.25;cursor:not-allowed}
+#send svg{width:14px;height:14px}
+.input-hint{margin-top:7px;font-size:.62rem;color:var(--dim);font-family:'Geist Mono',monospace}
+
+/* ── Right panel ── */
+.state-panel{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.state-panel::-webkit-scrollbar{width:2px}
+.state-panel::-webkit-scrollbar-thumb{background:var(--border)}
+.panel-title{padding:18px 18px 14px;font-size:.7rem;font-weight:600;border-bottom:1px solid var(--border);color:var(--mid);letter-spacing:.04em;flex-shrink:0}
+
+.prog-wrap{padding:14px 18px;border-bottom:1px solid var(--border)}
+.prog-meta{display:flex;justify-content:space-between;font-size:.6rem;color:var(--dim);font-family:'Geist Mono',monospace;margin-bottom:6px}
+.prog-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--green);border-radius:2px;width:0%;transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+.field-card{padding:12px 18px;border-bottom:1px solid var(--border);transition:background .3s}
+.field-card.collected{background:rgba(34,197,94,.04)}
+.field-card.active{background:rgba(59,130,246,.04)}
+.field-hd{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.field-ic{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border);display:grid;place-items:center;flex-shrink:0;font-size:.55rem;transition:all .3s}
+.field-card.collected .field-ic{border-color:var(--green);color:var(--green);background:rgba(34,197,94,.1)}
+.field-card.active .field-ic{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,.1);animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.field-lbl{font-size:.68rem;font-family:'Geist Mono',monospace;letter-spacing:.04em;color:var(--mid)}
+.field-card.collected .field-lbl{color:var(--green)}
+.field-card.active .field-lbl{color:var(--blue)}
+.field-val{font-size:.72rem;color:var(--txt);font-family:'Geist Mono',monospace;padding:4px 8px;background:var(--bg);border-radius:4px;border:1px solid var(--border);word-break:break-all;transition:all .3s;margin-top:2px}
+.field-val.empty{color:var(--dim);font-style:italic}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Left — caller info -->
+  <aside class="sidebar">
+    <div class="brand">
+      <h1>Inbound Call</h1>
+      <p>you are the rep</p>
+    </div>
+
+    <div class="sec-label">Caller</div>
+    <div class="info-row"><div class="info-key">Name</div><div class="info-val">Maya</div></div>
+    <div class="info-row"><div class="info-key">From</div><div class="info-val">Northwell Health</div></div>
+    <div class="info-row"><div class="info-key">Re</div><div class="info-val">Claim Inquiry</div></div>
+
+    <div class="sec-label">Patient on Call</div>
+    <div class="info-row"><div class="info-key">Name</div><div class="info-val">Robert Langdon</div></div>
+    <div class="info-row"><div class="info-key">DOB</div><div class="info-val">1975-03-14</div></div>
+    <div class="info-row"><div class="info-key">Member ID</div><div class="info-val">MBR-00421</div></div>
+    <div class="info-row"><div class="info-key">Tax ID</div><div class="info-val">TAX-887234</div></div>
+    <div class="info-row"><div class="info-key">NPI ID</div><div class="info-val">NPI-1234567</div></div>
+
+    <div class="lookup-box" id="lookup-box">
+      <div class="lookup-label-txt">Recording</div>
+      <div class="lookup-name">
+        <div class="spinner" id="spinner"></div>
+        <span id="lookup-lbl">—</span>
+      </div>
+    </div>
+
+    <div class="status-row">
+      <div class="status-dot"></div>
+      <span class="status-txt" id="status-txt">connecting…</span>
+    </div>
+  </aside>
+
+  <!-- Main chat -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title">Support Rep — Answering Call</div>
+      <div class="topbar-badge live" id="badge">Live Call</div>
+    </div>
+
+    <div id="messages"></div>
+
+    <div class="input-area">
+      <div class="input-box">
+        <textarea id="input" rows="1" placeholder="Reply to Maya…"></textarea>
+        <button id="send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+      <div class="input-hint">Enter to send · Shift+Enter for new line</div>
+    </div>
+  </main>
+
+  <!-- Right — live checklist -->
+  <aside class="state-panel">
+    <div class="panel-title">Maya's Checklist</div>
+    <div class="prog-wrap">
+      <div class="prog-meta"><span>Collected</span><span id="prog-txt">0 / 4</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+    </div>
+    <div id="fields-container"></div>
+  </aside>
+
+</div>
+<script>
+  const inputEl  = document.getElementById('input');
+  const msgsEl   = document.getElementById('messages');
+  const sendBtn  = document.getElementById('send');
+  const statusTxt= document.getElementById('status-txt');
+  const badge    = document.getElementById('badge');
+  const lookupBox= document.getElementById('lookup-box');
+  const lookupLbl= document.getElementById('lookup-lbl');
+  const spinner  = document.getElementById('spinner');
+  const progFill = document.getElementById('prog-fill');
+  const progTxt  = document.getElementById('prog-txt');
+  const fieldsContainer = document.getElementById('fields-container');
+
+  let botEl = null;
+  let inlinePill = null;
+  let fieldLabels = {};
+
+  function renderState(s) {
+    if (s.field_labels) fieldLabels = s.field_labels;
+
+    const total = (s.collect_fields || []).length;
+    const done  = Object.keys(s.collected || {}).length;
+    progTxt.textContent  = done + ' / ' + total;
+    progFill.style.width = (total ? done / total * 100 : 0) + '%';
+
+    if (s.call_done) {
+      badge.textContent = 'Call Complete';
+      badge.className   = 'topbar-badge complete';
+    }
+
+    fieldsContainer.innerHTML = '';
+    const nextKey = (s.collect_fields || []).find(k => !(s.collected || {})[k]);
+
+    (s.collect_fields || []).forEach(key => {
+      const label   = fieldLabels[key] || key;
+      const value   = (s.collected || {})[key];
+      const isDone  = !!value;
+      const isNext  = !isDone && key === nextKey;
+
+      const card = document.createElement('div');
+      card.className = 'field-card' + (isDone ? ' collected' : isNext ? ' active' : '');
+      card.innerHTML =
+        '<div class="field-hd">' +
+          '<div class="field-ic">' + (isDone ? '✓' : isNext ? '→' : '') + '</div>' +
+          '<div class="field-lbl">' + label + '</div>' +
+        '</div>' +
+        '<div class="field-val' + (value ? '' : ' empty') + '">' + (value || 'Awaiting…') + '</div>';
+      fieldsContainer.appendChild(card);
+    });
+  }
+
+  const ws = new WebSocket('ws://' + location.host + '/ws');
+
+  ws.onopen = () => {
+    statusTxt.textContent = 'connected';
+    botEl = addMsg('bot');  // Maya speaks first
+  };
+
+  ws.onmessage = ({ data }) => {
+    const msg = JSON.parse(data);
+
+    if (msg.type === 'token') {
+      if (!botEl) botEl = addMsg('bot');
+      const dots = botEl.querySelector('.typing');
+      if (dots) botEl.innerHTML = '';
+      if (inlinePill) {
+        let tn = botEl.lastChild;
+        if (!tn || tn.nodeType !== Node.TEXT_NODE) { tn = document.createTextNode(''); botEl.appendChild(tn); }
+        tn.textContent += msg.content;
+      } else {
+        botEl.textContent += msg.content;
+      }
+      msgsEl.scrollTop = msgsEl.scrollHeight;
+    }
+
+    if (msg.type === 'tool_start') {
+      lookupLbl.textContent = msg.label;
+      spinner.className     = 'spinner';
+      lookupBox.classList.add('visible');
+      if (!botEl) botEl = addMsg('bot');
+      const dots = botEl.querySelector('.typing');
+      if (dots) botEl.innerHTML = '';
+      inlinePill = document.createElement('div');
+      inlinePill.className = 'tool-pill';
+      inlinePill.innerHTML = '<div class="pill-dot"></div>' + msg.label;
+      botEl.appendChild(inlinePill);
+      botEl.appendChild(document.createTextNode(''));
+    }
+
+    if (msg.type === 'tool_done') {
+      spinner.className = 'spinner done';
+      setTimeout(() => lookupBox.classList.remove('visible'), 1400);
+      if (inlinePill) {
+        inlinePill.classList.add('done');
+        inlinePill.querySelector('.pill-dot').style.cssText = 'background:var(--green);animation:none';
+        inlinePill = null;
+      }
+    }
+
+    if (msg.type === 'state')        renderState(msg);
+    if (msg.type === 'call_complete') { badge.textContent='Call Complete'; badge.className='topbar-badge complete'; }
+
+    if (msg.type === 'done') {
+      botEl      = null;
+      inlinePill = null;
+      inputEl.disabled = false;
+      sendBtn.disabled = false;
+      inputEl.focus();
+    }
+  };
+
+  ws.onerror = ws.onclose = () => { statusTxt.textContent = 'disconnected'; sendBtn.disabled = true; };
+
+  function addMsg(role) {
+    const row = document.createElement('div');
+    row.className = 'msg ' + role;
+    row.innerHTML =
+      '<div class="avatar">' + (role === 'user' ? 'Rep' : 'AI') + '</div>' +
+      '<div class="msg-body">' +
+        '<div class="msg-who">' + (role === 'user' ? 'You (Rep)' : 'Maya') + '</div>' +
+        '<div class="msg-text"></div>' +
+      '</div>';
+    if (role === 'bot') row.querySelector('.msg-text').innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+    msgsEl.appendChild(row);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    return row.querySelector('.msg-text');
+  }
+
+  function send() {
+    const text = inputEl.value.trim();
+    if (!text || ws.readyState !== WebSocket.OPEN) return;
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+    inputEl.disabled = true;
+    sendBtn.disabled = true;
+    addMsg('user').textContent = text;
+    botEl = addMsg('bot');
+    ws.send(JSON.stringify({ message: text }));
+  }
+
+  inputEl.addEventListener('input', () => {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
+  });
+  inputEl.addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()} });
+  sendBtn.addEventListener('click', send);
+</script>
+</body>
+</html>
